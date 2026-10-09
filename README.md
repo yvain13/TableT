@@ -2,7 +2,7 @@
 
 A projector shows circles on a wall. Hit them with an orange table tennis ball: a hit circle
 bursts, scores, and a new one appears. One static web page on an iPad draws the game and
-tracks the ball with the iPad's rear camera. There is no server, no network in the hit path,
+tracks the ball with the phone's (or tablet's) rear camera. There is no server, no network in the hit path,
 and no AI: classic computer vision only.
 
 ## Run it
@@ -15,13 +15,13 @@ The camera needs a secure page (HTTPS, or `localhost` on the same machine).
 python3 -m http.server 8000      # then open http://localhost:8000
 ```
 
-**On the iPad during development:** serve over HTTPS from the laptop, for example
+**On the phone during development:** serve over HTTPS from the laptop, for example
 `npx cloudflared tunnel --url http://localhost:8000`, or `mkcert` plus any HTTPS static server,
 and open the URL in Safari over Wi-Fi.
 
 **Deploy:** push the folder to GitHub Pages, Netlify or Railway as static files. No build step.
-In Safari choose Share → Add to Home Screen; it then opens full screen, and the service worker
-keeps it working offline after the first load. Set iPad Auto-Lock to Never (the page also asks
+On iPhone, Safari → Share → Add to Home Screen; it then opens full screen (iPhone Safari can't go full screen otherwise), and the service worker
+keeps it working offline after the first load. Set Auto-Lock to Never (the page also asks
 for a Wake Lock).
 
 ## Play
@@ -54,7 +54,7 @@ sizes (10–40 cm) and the 2 cm hit margin are worked out from it.
 Settings and calibration are saved in browser storage, and fall back to defaults when storage
 is unavailable.
 
-**Projector lag timer** (Start screen): a millisecond clock. Film the iPad and the wall together
+**Projector lag timer** (Start screen): a millisecond clock. Film the phone and the wall together
 in 240 fps slow motion; the difference between the two readings is the projector's lag.
 
 ## How it works
@@ -78,6 +78,8 @@ Details beyond the spec:
   better-fitting pair of lines.
 - Once a turn is rejected (floor bounce, paddle hit), the next two candidates, which span the
   same turn, are skipped too.
+- The orange level is (red − blue) / (red + green + blue), a ratio, so shadows moving on the wall
+  (which change brightness, not colour) don't register as the ball.
 - Open with `?debug` to get `window.wtp` (game, tracker, bounce, camera…) in the console.
 
 ## Tests

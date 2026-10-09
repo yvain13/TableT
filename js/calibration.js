@@ -85,8 +85,8 @@ export class Calibrator {
 
   sizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
-    this.W = window.innerWidth;
-    this.H = window.innerHeight;
+    this.W = this.canvas.clientWidth || window.innerWidth;
+    this.H = this.canvas.clientHeight || window.innerHeight;
     this.canvas.width = Math.round(this.W * dpr);
     this.canvas.height = Math.round(this.H * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -107,9 +107,13 @@ export class Calibrator {
     }));
   }
 
+  // Fit the camera view into the space the message and buttons leave free.
   layoutView() {
     this.view.attach(this.camera.stream);
-    this.view.layout(this.camera.aspect, this.W * 0.5, this.H * 0.5);
+    const ui = this.center.parentElement;
+    const bar = this.msg.parentElement;
+    const maxH = ui.clientHeight - bar.offsetHeight - 30;
+    this.view.layout(this.camera.aspect, ui.clientWidth, Math.max(80, maxH));
   }
 
   drawBlack() {
@@ -184,7 +188,8 @@ export class Calibrator {
     const ordered = blobs.length === 4 ? orderCorners(blobs.map((b) => [b.x / A.w, b.y / A.h])) : null;
     const H = ordered && isConvexQuad(ordered) ? solveHomography(ordered, CAL_DOTS) : null;
     if (H && invertH(H)) this.check(H, ordered, 'Found all 4 dots.');
-    else this.manual(`Auto found ${blobs.length} of 4 dots. Tap them yourself.`);
+    else if (blobs.length < 4) this.manual(`Auto found ${blobs.length} of 4 dots. Tap them yourself.`);
+    else this.manual('Auto found 4 bright spots, but they are not the 4 corners. Tap the dots yourself.');
   }
 
   manualUnavailable() {
@@ -203,12 +208,13 @@ export class Calibrator {
     this.sizeCanvas();
     this.drawDots();
     this.showUi(true);
-    this.layoutView();
     this.setButtons([
       ['Undo', () => { this.taps.pop(); this.drawManual(); }],
       ['Retry auto', () => this.auto()],
       ['Cancel', () => this.onCancel()],
     ]);
+    this.drawManual(); // sets the message, so the view can size around it
+    this.layoutView();
     this.drawManual();
   }
 
@@ -249,6 +255,12 @@ export class Calibrator {
     this.sizeCanvas();
     this.drawGrid();
     this.showUi(true);
+    this.msg.textContent = `${note} The green grid in the camera view should sit on the projected cyan grid.`;
+    this.setButtons([
+      ['Looks right: play', () => this.onDone(H, camPts), true],
+      ['Redo auto', () => this.auto()],
+      ['Tap corners', () => this.manual()],
+    ]);
     this.layoutView();
     const Hinv = invertH(H);
     const v = this.view;
@@ -259,11 +271,5 @@ export class Calibrator {
       v.line([applyH(Hinv, 0, u), applyH(Hinv, 1, u)], 'rgba(0,230,118,0.9)', 1.5);
     }
     camPts.forEach(([x, y]) => v.dot(x, y, 6, '#b05cff'));
-    this.msg.textContent = `${note} The green grid in the camera view should sit on the projected cyan grid.`;
-    this.setButtons([
-      ['Looks right: play', () => this.onDone(H, camPts), true],
-      ['Redo auto', () => this.auto()],
-      ['Tap corners', () => this.manual()],
-    ]);
   }
 }

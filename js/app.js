@@ -13,6 +13,8 @@ import { SettingsPanel } from './settings.js';
 const $ = (sel) => document.querySelector(sel);
 
 const params = { ...DEFAULT_PARAMS, ...load('params', {}) };
+// v1 stored the motion threshold on a 0..255 scale; it is now a 0..1 ratio.
+if (params.motionThresh > 1) params.motionThresh = DEFAULT_PARAMS.motionThresh;
 let calibration = load('calibration', null);
 
 const camera = new Camera();
@@ -79,6 +81,19 @@ function refreshStart() {
   $('#btn-recal').hidden = !has;
 }
 
+// iPhone Safari has no fullscreen API for pages; the Home Screen app is how to lose the bars.
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = navigator.standalone || window.matchMedia('(display-mode: standalone)').matches
+  || window.matchMedia('(display-mode: fullscreen)').matches;
+$('#install-tip').hidden = !(isIOS && !standalone);
+
+// A calibration made with the camera in the other orientation no longer matches.
+function calibrationMatchesCamera() {
+  if (!calibration?.H) return false;
+  if (!calibration.camW || !camera.width) return true;
+  return (calibration.camW > calibration.camH) === (camera.width > camera.height);
+}
+
 function status(text) {
   $('#start-status').textContent = text;
 }
@@ -113,7 +128,7 @@ document.addEventListener('visibilitychange', () => {
 $('#btn-go').addEventListener('click', async () => {
   if (!(await enterSession())) return;
   sessionTestMode = false;
-  show(calibration?.H ? 'play' : 'calibrate');
+  show(calibrationMatchesCamera() ? 'play' : 'calibrate');
 });
 $('#btn-recal').addEventListener('click', async () => {
   if (!(await enterSession())) return;
@@ -174,7 +189,7 @@ const settings = new SettingsPanel($('#settings'), params, {
       ['Frames/s', camera.running ? `${camera.fps.toFixed(0)} (track ${asked ? asked.toFixed(0) : '?'})` : '–'],
       ['Processing', `${stats.procMs.toFixed(1)} ms`],
       ['Detections/s', String(stats.dps)],
-      ['Calibration', calibration?.at ? new Date(calibration.at).toLocaleString() : 'none'],
+      ['Calibration', calibration?.at ? new Date(calibration.at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'none'],
       ['Last reject', bounce.lastReject?.reason ?? '–'],
     ];
   },
@@ -233,11 +248,19 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-window.addEventListener('resize', () => {
-  game.resize();
-  bounceParams.bounds = { w: game.W, h: game.H };
-  bounce.reset();
-});
+// Phones resize on rotation and when browser bars show or hide; the visual viewport reports both.
+let resizeTimer = 0;
+function onResize() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    game.resize();
+    bounceParams.bounds = { w: game.W, h: game.H };
+    bounce.reset();
+  }, 120);
+}
+window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', onResize);
+window.visualViewport?.addEventListener('resize', onResize);
 
 if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});

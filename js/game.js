@@ -56,14 +56,18 @@ export class Game {
 
   get pxPerCm() { return this.W / this.wallWidthCm; }
 
+  // Browser bars appearing or hiding resize the page mid-game, so keep the targets that
+  // still fit and only replace the ones that no longer do.
   resize() {
     const dpr = window.devicePixelRatio || 1;
-    this.W = window.innerWidth;
-    this.H = window.innerHeight;
+    this.W = this.canvas.clientWidth || window.innerWidth;
+    this.H = this.canvas.clientHeight || window.innerHeight;
     this.canvas.width = Math.round(this.W * dpr);
     this.canvas.height = Math.round(this.H * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.respawnAll();
+    this.targets = this.targets.filter((t) => t.x - t.r >= 0 && t.y - t.r >= 0 && t.x + t.r <= this.W && t.y + t.r <= this.H);
+    const now = performance.now();
+    while (this.targets.length + this.spawnQueue.length < TARGET_COUNT && this.spawn(now));
   }
 
   setWallWidth(cm) {

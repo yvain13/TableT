@@ -9,7 +9,7 @@ const SLIDERS = [
   { key: 'hueMax', label: 'Hue max', min: 0, max: 60, step: 1, unit: '°' },
   { key: 'minSat', label: 'Min saturation', min: 0, max: 1, step: 0.01 },
   { key: 'minVal', label: 'Min brightness', min: 0, max: 1, step: 0.01 },
-  { key: 'motionThresh', label: 'Motion threshold', min: 0, max: 120, step: 1 },
+  { key: 'motionThresh', label: 'Motion threshold', min: 0, max: 0.5, step: 0.01 },
   { key: 'minBlob', label: 'Min blob size', min: 1, max: 80, step: 1, unit: ' px' },
   { key: 'turnAngle', label: 'Turn angle', min: 30, max: 150, step: 1, unit: '°' },
   { key: 'minMove', label: 'Min move', min: 1, max: 40, step: 1, unit: ' px' },
@@ -87,15 +87,19 @@ export class SettingsPanel {
         el('div', { className: 'panel-head' },
           el('h2', { textContent: 'Settings' }),
           button('Back to game', () => this.hooks.onClose(), 'primary')),
-        viewWrap,
-        el('p', { className: 'legend', textContent: 'green: wall · cyan: matching pixels · white: ball and trail · purple: last hit' }),
-        this.readouts,
-        el('div', { className: 'sliders' }, ...sliders),
-        el('div', { className: 'toggles' }, ...toggles),
-        el('div', { className: 'actions' },
-          button('Recalibrate', () => this.hooks.onRecalibrate()),
-          button('Reset score', () => this.hooks.onResetScore()),
-          button('Default tuning', defaults))));
+        el('div', { className: 'panel-body' },
+          el('div', { className: 'panel-left' },
+            viewWrap,
+            el('p', { className: 'legend', textContent: 'green: wall · cyan: matching pixels · white: ball and trail · purple: last hit' }),
+            this.readouts),
+          el('div', { className: 'panel-right' },
+            el('div', { className: 'sliders' }, ...sliders),
+            el('div', { className: 'toggles' }, ...toggles),
+            el('div', { className: 'actions' },
+              button('Recalibrate', () => this.hooks.onRecalibrate()),
+              button('Reset score', () => this.hooks.onResetScore()),
+              button('Default tuning', defaults))))));
+    this.viewWrap = viewWrap;
     this.sync();
   }
 
@@ -128,9 +132,8 @@ export class SettingsPanel {
   // Called every animation frame while open.
   render(now) {
     if (!this.isOpen) return;
-    const panel = this.root.firstElementChild;
-    const maxW = panel.clientWidth - 32;
-    this.view.layout(this.aspect || 16 / 9, Math.max(160, maxW), window.innerHeight * 0.32);
+    const short = window.innerHeight <= 560;
+    this.view.layout(this.aspect || 16 / 9, Math.max(160, this.viewWrap.clientWidth), window.innerHeight * (short ? 0.45 : 0.32));
     this.drawOverlay();
     if (now - this.lastReadout > 400) {
       this.lastReadout = now;

@@ -4,7 +4,9 @@ import { CELL, WINDOW, PROC_WIDTH, ROI_MARGIN } from './config.js';
 import { applyH, invertH } from './homography.js';
 
 // Pure per-pixel detector.
-// data: RGBA pixels (w x h). prev: Int16Array of last frame's orange level (red - blue), updated in place.
+// The orange level is (red - blue) / (red + green + blue): a ratio, so a shadow (which dims a
+// pixel without changing its colour) leaves it unchanged, while a passing orange ball raises it.
+// data: RGBA pixels (w x h). prev: Float32Array of last frame's orange level, updated in place.
 // mask: Uint8Array output, 1 where a pixel is orange and newly orange. hasPrev: false on the first frame.
 // Returns { x, y, n, size, length, angle } in pixel coords of this image, or null.
 export function detectBall(data, w, h, prev, mask, hasPrev, p) {
@@ -19,7 +21,7 @@ export function detectBall(data, w, h, prev, mask, hasPrev, p) {
     for (let x = 0; x < w; x++, i++) {
       const j = i << 2;
       const r = data[j], g = data[j + 1], b = data[j + 2];
-      const level = r - b;
+      const level = (r - b) / (r + g + b + 1);
       const old = prev[i];
       prev[i] = level;
       mask[i] = 0;
@@ -120,7 +122,7 @@ export class Tracker {
     if (w !== this.w || h !== this.h) {
       this.canvas.width = this.w = w;
       this.canvas.height = this.h = h;
-      this.prev = new Int16Array(w * h);
+      this.prev = new Float32Array(w * h);
       this.mask = new Uint8Array(w * h);
       this.hasPrev = false;
     }

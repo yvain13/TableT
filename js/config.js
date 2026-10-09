@@ -5,7 +5,7 @@ export const DEFAULT_PARAMS = {
   hueMax: 40,         // degrees
   minSat: 0.45,       // 0..1
   minVal: 0.3,        // 0..1
-  motionThresh: 25,   // jump in (red - blue) since previous frame, 0..255
+  motionThresh: 0.12, // jump in orange level (red - blue) / (r + g + b) since the previous frame
   minBlob: 6,         // matching pixels needed in the 48 px window
   turnAngle: 70,      // degrees of path turn that counts as a bounce
   minMove: 6,         // screen px each 2-frame segment must move

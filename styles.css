@@ -29,11 +29,12 @@ html, body {
 
 [hidden] { display: none !important; }
 
+/* Sized by inset, not 100vw/100vh: on phones 100vh is taller than the visible area. */
 #game {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: block;
 }
 
@@ -73,6 +74,7 @@ button.link { border: none; color: var(--muted); text-decoration: underline; pad
 .sub { color: var(--muted); margin: 0; max-width: 560px; }
 .stack { display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 12px; }
 .status { min-height: 1.4em; color: var(--accent); margin: 0; }
+.tip { color: var(--muted); font-size: 14px; margin: 0; max-width: 520px; }
 .links { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
 .gear {
@@ -89,23 +91,25 @@ button.link { border: none; color: var(--muted); text-decoration: underline; pad
   color: #3a4048;
 }
 
-/* Calibration */
+/* Calibration: UI stays in the middle 60% so the corner dots (10% in) are never covered. */
 #cal-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.cal-center {
+.cal-ui {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 0;
+  pointer-events: none;
 }
-.cal-bar {
-  position: absolute;
-  left: 50%;
-  bottom: 3%;
-  transform: translateX(-50%);
-  width: min(60vw, 720px);
-  text-align: center;
-}
-.cal-bar p { margin: 0 0 10px; }
+.cal-ui > * { pointer-events: auto; }
+.cal-bar { width: 100%; text-align: center; }
+.cal-bar p { margin: 0 0 8px; }
 .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 /* Camera view (shared) */
@@ -141,6 +145,7 @@ button.link { border: none; color: var(--muted); text-decoration: underline; pad
   padding: 16px;
 }
 .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.panel-right { margin-top: 8px; }
 .panel-head h2 { margin: 0; font-size: 22px; }
 .legend { color: var(--muted); font-size: 13px; text-align: center; margin: 8px 0; }
 .readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px 16px; margin: 8px 0 16px; font-size: 14px; }
@@ -154,3 +159,50 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .toggle { display: flex; align-items: center; gap: 10px; font-size: 15px; }
 .toggle input { width: 22px; height: 22px; accent-color: var(--accent); }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Portrait phone: ask to rotate. */
+.rotate { display: none; }
+@media (orientation: portrait) and (pointer: coarse) {
+  .rotate {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    padding: 24px;
+  }
+}
+
+/* Phone in landscape: short screen. Compact controls, settings in two columns. */
+@media (max-height: 560px) {
+  button { padding: 8px 14px; min-height: 40px; font-size: 15px; border-radius: 10px; }
+  button.big { font-size: 18px; padding: 10px 28px; }
+  .start, .lag { gap: 8px; padding: 12px; }
+  .start h1 { font-size: clamp(26px, 9vh, 44px); }
+  .stack { flex-direction: row; margin-top: 4px; }
+  .cal-bar p { font-size: 14px; margin-bottom: 6px; }
+  .panel {
+    width: min(78vw, 900px);
+    max-height: 86vh;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-head { margin-bottom: 6px; }
+  .panel-head h2 { font-size: 18px; }
+  .panel-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-height: 0; flex: 1; }
+  .panel-left, .panel-right { overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+  .panel-right { margin-top: 0; }
+  .legend { font-size: 11px; margin: 4px 0; }
+  .readouts { grid-template-columns: 1fr; font-size: 12px; margin: 4px 0; gap: 2px; }
+  .sliders { grid-template-columns: 1fr; gap: 6px; }
+  .slider { font-size: 13px; }
+  .toggles { margin: 10px 0; gap: 8px; }
+  .toggle { font-size: 13px; }
+}

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <title>Wall Target Pong</title>
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,6 +26,7 @@
       <button id="btn-recal" hidden>Calibrate again</button>
     </div>
     <p id="start-status" class="status" role="status"></p>
+    <p id="install-tip" class="tip" hidden>For full screen with no browser bars: Share → Add to Home Screen, then open it from there.</p>
     <div class="links">
       <button id="btn-test" class="link">Try without a camera (tap = hit)</button>
       <button id="btn-lag" class="link">Projector lag timer</button>
@@ -34,20 +35,24 @@
 
   <section id="calibrate" class="screen calibrate" hidden>
     <canvas id="cal-canvas"></canvas>
-    <div id="cal-center" class="cal-center" hidden></div>
-    <div class="cal-bar" hidden>
-      <p id="cal-msg"></p>
-      <div id="cal-buttons" class="row"></div>
+    <div id="cal-ui" class="cal-ui">
+      <div id="cal-center" class="cal-center" hidden></div>
+      <div class="cal-bar" hidden>
+        <p id="cal-msg"></p>
+        <div id="cal-buttons" class="row"></div>
+      </div>
     </div>
   </section>
 
   <section id="lag" class="screen lag" hidden>
     <div id="lag-time" class="lag-time">0.000</div>
-    <p class="sub">Film the iPad and the wall together in 240 fps slow motion. The difference between the two readings is the projector lag.</p>
+    <p class="sub">Film the phone and the wall together in 240 fps slow motion. The difference between the two readings is the projector lag.</p>
     <button id="lag-back">Back</button>
   </section>
 
   <section id="settings" class="overlay" hidden></section>
+
+  <div class="rotate" aria-live="polite"><p>Turn your phone sideways</p></div>
 
   <script type="module" src="js/app.js"></script>
 </body>

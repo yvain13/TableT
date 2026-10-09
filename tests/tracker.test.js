@@ -16,7 +16,7 @@ function frame(fill, blobs = []) {
 }
 const ORANGE = [245, 120, 20];
 const run = (frames) => {
-  const prev = new Int16Array(W * H), mask = new Uint8Array(W * H);
+  const prev = new Float32Array(W * H), mask = new Uint8Array(W * H);
   let out = null;
   frames.forEach((f, i) => { out = detectBall(f, W, H, prev, mask, i > 0, DEFAULT_PARAMS); });
   return out;
@@ -32,6 +32,19 @@ test('finds a moving orange ball', () => {
 test('ignores a static orange object', () => {
   const still = { x: 50, y: 50, r: 6, rgb: ORANGE };
   assert.equal(run([frame([40, 40, 45], [still]), frame([40, 40, 45], [still])]), null);
+});
+
+const BEIGE = [200, 180, 150], SHADOW = [90, 81, 68]; // a warm wall, and the same wall in shadow
+
+test('ignores a shadow moving across a warm wall', () => {
+  const a = { x: 60, y: 60, r: 10, rgb: SHADOW }, b = { x: 90, y: 60, r: 10, rgb: SHADOW };
+  assert.equal(run([frame(BEIGE, [a]), frame(BEIGE, [b])]), null);
+  assert.equal(run([frame(BEIGE, [b]), frame(BEIGE)]), null); // shadow lifting off
+});
+
+test('still finds the ball on a warm wall', () => {
+  const det = run([frame(BEIGE), frame(BEIGE, [{ x: 120, y: 60, r: 5, rgb: ORANGE }])]);
+  assert.ok(det && Math.abs(det.x - 120.5) < 1);
 });
 
 test('ignores moving non-orange colours (cyan target)', () => {
