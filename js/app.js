@@ -35,6 +35,14 @@ const bounceParams = { ...params, bounds: { w: game.W, h: game.H } };
 const stats = { procMs: 0, detections: 0, dps: 0, since: performance.now() };
 const trail = [];
 let lastHit = null;
+let seenReject = null;
+
+// A bounce just past the frame's sides or top is an OUT; far below is the floor, so stay quiet.
+function isNearMiss(r) {
+  if (r.reason !== 'outside wall') return false;
+  const { W, H } = game;
+  return r.x > -0.15 * W && r.x < 1.15 * W && r.y > -0.15 * H && r.y < 1.06 * H;
+}
 
 camera.onFrame((t) => {
   if (screen !== 'play' || game.paused || !tracker.H) return;
@@ -50,6 +58,9 @@ camera.onFrame((t) => {
     if (hit) {
       game.hit(hit.x, hit.y);
       lastHit = { cam: applyH(tracker.Hinv, hit.x / game.W, hit.y / game.H), t };
+    } else if (bounce.lastReject && bounce.lastReject !== seenReject) {
+      seenReject = bounce.lastReject;
+      if (isNearMiss(seenReject)) game.out(seenReject.x, seenReject.y);
     }
   }
   stats.procMs = stats.procMs * 0.9 + (performance.now() - t0) * 0.1;
@@ -73,6 +84,7 @@ function show(name) {
   bounce.reset();
   tracker.reset();
   if (name === 'start') refreshStart();
+  if (name === 'play') game.flashBoundary();
 }
 
 function refreshStart() {

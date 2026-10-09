@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hitTest, pickTier, placeTarget } from '../js/game.js';
+import { hitTest, pickTier, placeTarget, tierRadius } from '../js/game.js';
 import { TIERS } from '../js/config.js';
 
 test('hit within radius plus margin; smaller target wins', () => {
@@ -16,6 +16,19 @@ test('tier shares follow the spec', () => {
   const counts = { small: 0, medium: 0, large: 0 };
   for (let i = 0; i < 20000; i++) counts[pickTier(rand).name]++;
   for (const t of TIERS) assert.ok(Math.abs(counts[t.name] / 20000 - t.share) < 0.02, t.name);
+});
+
+test('each tier has one size, and higher points are always smaller', () => {
+  const [small, medium, large] = TIERS;
+  for (const [W, H] of [[1024, 768], [844, 390]]) {
+    const pxPerCm = W / 180;
+    const r = TIERS.map((t) => tierRadius(t, pxPerCm, W, H));
+    assert.deepEqual(r, TIERS.map((t) => tierRadius(t, pxPerCm, W, H)));
+    assert.ok(r[0] < r[1] && r[1] < r[2], `${W}x${H}: ${r}`);
+    assert.ok(r[0] * 2 >= 10 * pxPerCm, 'small never under 10 cm');
+  }
+  assert.ok(small.points > medium.points && medium.points > large.points);
+  assert.equal(new Set(TIERS.map((t) => t.color)).size, 3);
 });
 
 test('placement never overlaps, respects edges and avoid zones', () => {

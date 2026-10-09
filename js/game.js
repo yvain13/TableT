@@ -1,6 +1,8 @@
 // Targets, hit test, score and animations, drawn on a full-screen canvas.
 
-import { TARGET_COUNT, HIT_MARGIN_CM, RESPAWN_MS, TIERS, TARGET_COLORS } from './config.js';
+import {
+  TARGET_COUNT, HIT_MARGIN_CM, RESPAWN_MS, TIERS, BOUNDARY_CM, BOUNDARY_COLOR, OUT_COLOR, BOUNDARY_PULSE_MS,
+} from './config.js';
 
 // Closest-fitting target: within radius + margin; when two qualify, the smaller wins.
 export function hitTest(targets, x, y, marginPx) {
@@ -32,6 +34,11 @@ export function placeTarget(existing, r, W, H, { margin = 0, gap = 0, avoid = []
     return { x, y };
   }
   return null;
+}
+
+// Radius of a tier's circles: fixed per tier; only the largest tier is capped on a small wall.
+export function tierRadius(tier, pxPerCm, W, H) {
+  return Math.min((tier.cm * pxPerCm) / 2, Math.min(W, H) * 0.16);
 }
 
 const easeOutBack = (t) => 1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
@@ -88,27 +95,34 @@ export class Game {
     for (let i = 0; i < TARGET_COUNT; i++) this.spawn(now);
   }
 
+  get boundaryWidth() { return Math.max(6, BOUNDARY_CM * this.pxPerCm); }
+
+  // Pulse the play-area frame, e.g. when a game starts.
+  flashBoundary(now = performance.now()) { this.boundaryFlash = now; }
+
+  // A bounce just outside the play area: flash the nearest edge.
+  out(x, y, now = performance.now()) {
+    const d = { left: x, right: this.W - x, top: y, bottom: this.H - y };
+    const edge = Object.keys(d).reduce((a, b) => (d[a] < d[b] ? a : b));
+    this.effects.push({ kind: 'out', edge, x, y, start: now });
+  }
+
   spawn(now) {
     const opts = {
-      margin: Math.max(12, this.W * 0.03),
+      margin: Math.max(12, this.W * 0.03, this.boundaryWidth * 2),
       gap: this.pxPerCm * 3,
       avoid: this.avoidZones(),
       rand: this.rand,
     };
     // Try the drawn tier first, then smaller tiers if the wall is too crowded.
     const first = pickTier(this.rand);
-    const order = [first, ...TIERS.filter((t) => t !== first).sort((a, b) => a.minCm - b.minCm)];
+    const order = [first, ...TIERS.filter((t) => t !== first).sort((a, b) => a.cm - b.cm)];
     for (const tier of order) {
-      const dCm = tier.minCm + this.rand() * (tier.maxCm - tier.minCm);
-      const r = Math.min((dCm * this.pxPerCm) / 2, Math.min(this.W, this.H) * 0.16);
+      const r = tierRadius(tier, this.pxPerCm, this.W, this.H);
       const pos = placeTarget(this.targets, r, this.W, this.H, opts);
       if (!pos) continue;
-      const neighbours = new Set(this.targets.map((t) => t.color));
-      const colours = TARGET_COLORS.filter((c) => !neighbours.has(c));
-      const pool = colours.length ? colours : TARGET_COLORS;
       this.targets.push({
-        id: this.nextId++, x: pos.x, y: pos.y, r, tier,
-        points: tier.points, color: pool[Math.floor(this.rand() * pool.length)], born: now,
+        id: this.nextId++, x: pos.x, y: pos.y, r, tier, points: tier.points, color: tier.color, born: now,
       });
       return true;
     }
@@ -153,6 +167,7 @@ export class Game {
       if (this.targets.length < TARGET_COUNT) this.spawn(now);
     }
 
+    this.drawBoundary(now);
     for (const t of this.targets) this.drawTarget(t, now);
     this.effects = this.effects.filter((e) => this.drawEffect(e, now));
     this.drawScore(now);
@@ -170,6 +185,18 @@ export class Game {
       ctx.textBaseline = 'middle';
       ctx.fillText('Paused', W / 2, H / 2);
     }
+  }
+
+  drawBoundary(now) {
+    const { ctx, W, H } = this;
+    const bw = this.boundaryWidth;
+    const k = (now - (this.boundaryFlash ?? -Infinity)) / BOUNDARY_PULSE_MS;
+    const pulse = k >= 0 && k < 1 ? 0.5 + 0.5 * Math.cos(k * Math.PI * 6) : 0;
+    ctx.strokeStyle = BOUNDARY_COLOR;
+    ctx.globalAlpha = 0.85 + 0.15 * pulse;
+    ctx.lineWidth = bw * (1 + pulse);
+    ctx.strokeRect(ctx.lineWidth / 2, ctx.lineWidth / 2, W - ctx.lineWidth, H - ctx.lineWidth);
+    ctx.globalAlpha = 1;
   }
 
   drawTarget(t, now) {
@@ -231,6 +258,34 @@ export class Game {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(e.text, e.x, e.y - k * this.H * 0.08);
+      ctx.globalAlpha = 1;
+      return true;
+    }
+    if (e.kind === 'out') {
+      const life = 900;
+      if (age > life) return false;
+      const k = age / life;
+      const { W, H } = this;
+      const bw = this.boundaryWidth * 2.5;
+      const blink = Math.cos(k * Math.PI * 5) > 0 ? 1 : 0.35;
+      ctx.globalAlpha = (1 - k) * blink;
+      ctx.fillStyle = OUT_COLOR;
+      const len = 0.35;
+      if (e.edge === 'left' || e.edge === 'right') {
+        const y = Math.min(Math.max(e.y, H * len / 2), H * (1 - len / 2));
+        ctx.fillRect(e.edge === 'left' ? 0 : W - bw, y - (H * len) / 2, bw, H * len);
+      } else {
+        const x = Math.min(Math.max(e.x, W * len / 2), W * (1 - len / 2));
+        ctx.fillRect(x - (W * len) / 2, e.edge === 'top' ? 0 : H - bw, W * len, bw);
+      }
+      const size = Math.round(H * 0.08);
+      ctx.font = `800 ${size}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const inset = bw + size;
+      const tx = e.edge === 'left' ? inset * 1.2 : e.edge === 'right' ? W - inset * 1.2 : Math.min(Math.max(e.x, inset * 2), W - inset * 2);
+      const ty = e.edge === 'top' ? inset : e.edge === 'bottom' ? H - inset : Math.min(Math.max(e.y, inset), H - inset);
+      ctx.fillText('OUT', tx, ty);
       ctx.globalAlpha = 1;
       return true;
     }

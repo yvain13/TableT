@@ -32,7 +32,9 @@ for a Wake Lock).
    solves the camera-to-screen mapping. If it can't find all 4, tap the dots in the camera view
    in order (top-left, top-right, bottom-right, bottom-left). Check that the green grid sits on
    the projected cyan grid, then play.
-3. **Play**: hit circles. Small = 10 points, medium = 5, large = 2.
+3. **Play**: hit circles inside the white frame. Each size has one colour and one value:
+   green small (11 cm) = 10, cyan medium (20 cm) = 5, purple large (35 cm) = 2.
+   The frame pulses when a game starts; a bounce just outside it flashes OUT on that edge.
 
 Hidden controls: tap the score to pause or resume; hold it for about a second to reset.
 The faint ⚙ in the top-left opens Settings.

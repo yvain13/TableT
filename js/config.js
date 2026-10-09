@@ -32,13 +32,19 @@ export const BOUNDS_TOL = 0.02;  // hit may sit 2% outside the wall and still co
 export const TARGET_COUNT = 6;
 export const HIT_MARGIN_CM = 2;
 export const RESPAWN_MS = 250;
+// One size and one colour per tier, so a circle's size and colour always tell its points.
+// Colours are never orange, red or yellow: the tracker would chase them.
 export const TIERS = [
-  { name: 'small', minCm: 10, maxCm: 12, points: 10, share: 0.20 },
-  { name: 'medium', minCm: 18, maxCm: 22, points: 5, share: 0.35 },
-  { name: 'large', minCm: 30, maxCm: 40, points: 2, share: 0.45 },
+  { name: 'small', cm: 11, points: 10, share: 0.20, color: '#00e676' },
+  { name: 'medium', cm: 20, points: 5, share: 0.35, color: '#00e5ff' },
+  { name: 'large', cm: 35, points: 2, share: 0.45, color: '#b05cff' },
 ];
-// Never orange, red or yellow: the tracker would chase them.
-export const TARGET_COLORS = ['#00e5ff', '#3d7bff', '#00e676', '#b05cff'];
+
+// Play-area boundary drawn around the projected image, so players can see it with the lights on.
+export const BOUNDARY_CM = 2.5;      // frame thickness on the wall
+export const BOUNDARY_COLOR = '#ffffff';
+export const OUT_COLOR = '#b05cff';
+export const BOUNDARY_PULSE_MS = 2500;
 
 // Calibration: dots 10% in from each corner, in order TL, TR, BR, BL (normalised screen coords)
 export const CAL_DOTS = [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9], [0.1, 0.9]];
