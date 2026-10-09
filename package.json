@@ -1,0 +1,11 @@
+{
+  "name": "wall-target-pong",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Projected target game with camera ball tracking, one static web page.",
+  "scripts": {
+    "test": "node --test tests/",
+    "serve": "python3 -m http.server 8000"
+  }
+}

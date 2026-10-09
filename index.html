@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Wall Target Pong</title>
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="WallTarget">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <button id="gear" class="gear" aria-label="Settings" hidden>⚙</button>
+
+  <section id="start" class="screen start">
+    <h1>Wall Target Pong</h1>
+    <p class="sub">Hit the circles on the wall with an orange ball.</p>
+    <div class="stack">
+      <button id="btn-go" class="primary big">Calibrate</button>
+      <button id="btn-recal" hidden>Calibrate again</button>
+    </div>
+    <p id="start-status" class="status" role="status"></p>
+    <div class="links">
+      <button id="btn-test" class="link">Try without a camera (tap = hit)</button>
+      <button id="btn-lag" class="link">Projector lag timer</button>
+    </div>
+  </section>
+
+  <section id="calibrate" class="screen calibrate" hidden>
+    <canvas id="cal-canvas"></canvas>
+    <div id="cal-center" class="cal-center" hidden></div>
+    <div class="cal-bar" hidden>
+      <p id="cal-msg"></p>
+      <div id="cal-buttons" class="row"></div>
+    </div>
+  </section>
+
+  <section id="lag" class="screen lag" hidden>
+    <div id="lag-time" class="lag-time">0.000</div>
+    <p class="sub">Film the iPad and the wall together in 240 fps slow motion. The difference between the two readings is the projector lag.</p>
+    <button id="lag-back">Back</button>
+  </section>
+
+  <section id="settings" class="overlay" hidden></section>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
