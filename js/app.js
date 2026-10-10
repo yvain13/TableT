@@ -100,11 +100,12 @@ const standalone = navigator.standalone || window.matchMedia('(display-mode: sta
   || window.matchMedia('(display-mode: fullscreen)').matches;
 $('#install-tip').hidden = !(isIOS && !standalone);
 
-// A calibration made with the camera in the other orientation no longer matches.
+// A calibration made with a different camera shape (orientation or aspect) no longer matches.
 function calibrationMatchesCamera() {
   if (!calibration?.H) return false;
   if (!calibration.camW || !camera.width) return true;
-  return (calibration.camW > calibration.camH) === (camera.width > camera.height);
+  const a = calibration.camW / calibration.camH, b = camera.width / camera.height;
+  return Math.abs(a - b) / a < 0.03;
 }
 
 function status(text) {
@@ -121,7 +122,7 @@ async function enterSession() {
   keepAwake();
   try {
     status('Starting camera…');
-    await camera.start();
+    await camera.start({ prefer60: params.prefer60fps });
     status('');
     return true;
   } catch (err) {
@@ -177,9 +178,27 @@ const calibrator = new Calibrator({
 
 // ---------- settings ----------
 
+let cameraPref = params.prefer60fps;
 const settings = new SettingsPanel($('#settings'), params, {
-  onChange(p) {
+  async onChange(p) {
     save('params', p);
+    if (p.prefer60fps !== cameraPref) {
+      cameraPref = p.prefer60fps;
+      if (camera.running) {
+        try {
+          await camera.restart({ prefer60: p.prefer60fps });
+          tracker.reset();
+          bounce.reset();
+          settings.view.attach(camera.stream);
+          settings.aspect = camera.aspect;
+          if (!calibrationMatchesCamera()) show('calibrate');
+        } catch (err) {
+          settings.close();
+          show('start');
+          status(`Camera failed: ${err.message || err.name}`);
+        }
+      }
+    }
     Object.assign(bounceParams, p);
     game.setWallWidth(p.wallWidthCm);
     game.showBallDot = p.showBallDot;
@@ -200,6 +219,7 @@ const settings = new SettingsPanel($('#settings'), params, {
     return [
       ['Camera', camera.running ? `${camera.width}×${camera.height}` : 'off'],
       ['Frames/s', camera.running ? `${camera.fps.toFixed(0)} (track ${asked ? asked.toFixed(0) : '?'})` : '–'],
+      ['Camera mode', camera.running ? camera.mode : '–'],
       ['Processing', `${stats.procMs.toFixed(1)} ms`],
       ['Detections/s', String(stats.dps)],
       ['Calibration', calibration?.at ? new Date(calibration.at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'none'],

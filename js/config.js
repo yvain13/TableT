@@ -13,6 +13,7 @@ export const DEFAULT_PARAMS = {
   sizeCheck: true,    // reject turns where the ball looks bigger (paddle hits)
   showBallDot: false, // debug: draw the tracked ball on the wall
   testMode: false,    // tapping the game counts as a hit
+  prefer60fps: true,  // ask the camera for 640x360 at 60 fps instead of 720p (often 30 fps)
 };
 
 // Tracker

@@ -1,7 +1,7 @@
 // Caches the app so it runs offline after the first load.
 // Serves from cache and refreshes the cache in the background (bump VERSION to force an update).
 
-const VERSION = 'wtp-v4';
+const VERSION = 'wtp-v5';
 const FILES = [
   './',
   './index.html',

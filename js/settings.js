@@ -20,6 +20,7 @@ const TOGGLES = [
   { key: 'sizeCheck', label: 'Size check (reject paddle hits)' },
   { key: 'showBallDot', label: 'Show ball dot on wall' },
   { key: 'testMode', label: 'Test mode: tap = hit' },
+  { key: 'prefer60fps', label: 'Camera: prefer 60 fps (lower resolution)' },
 ];
 
 function el(tag, attrs = {}, ...children) {
