@@ -42,6 +42,19 @@ The faint ⚙ in the top-left opens Settings.
 **Set "Projected width" in Settings** to the measured width of the image on your wall. Target
 sizes (10–40 cm) and the 2 cm hit margin are worked out from it.
 
+## Camera placement
+
+Where the camera sits matters more than any setting. From a 3D simulation of a 4 m room at 30 fps:
+
+| Camera | Bounces caught | 9 in 10 hits within | Worst |
+| --- | --- | --- | --- |
+| Behind the players, chest height | ~48% | 2.3 cm | 14 cm |
+| Behind the players, ceiling height | ~88% | 2.0 cm | 3 cm |
+| Side wall, about 45° to the target wall | 100% | 6.5 cm | rare big misses |
+
+Best: high up (ceiling height), behind the players, seeing the whole frame. 60 fps (where the
+browser allows it) cuts errors to about 1 cm in every position.
+
 ## Settings
 
 - Live camera view (greyscale, so the projected view never shows an orange ball to the
@@ -76,8 +89,10 @@ Details beyond the spec:
 
 - The ball's **size** is the width of its streak (the short axis of the pixel spread), so motion
   blur doesn't make a fast ball look bigger and set off the paddle check.
-- The hit-point fit tries the candidate frame on either side of the contact and keeps the
-  better-fitting pair of lines.
+- The hit point is where the timed path in and path out meet (not where two lines cross), so it
+  works even when the ball comes straight back along the camera's line of sight.
+- The ball looks smallest at the wall: a turn while it is still shrinking is part of the throw,
+  and a sudden speed change where it looks smallest counts as a bounce even with no turn.
 - Once a turn is rejected (floor bounce, paddle hit), the next two candidates, which span the
   same turn, are skipped too.
 - The orange level is (red − blue) / (red + green + blue), a ratio, so shadows moving on the wall

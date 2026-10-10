@@ -37,11 +37,12 @@ const trail = [];
 let lastHit = null;
 let seenReject = null;
 
-// A bounce just past the frame's sides or top is an OUT; far below is the floor, so stay quiet.
+// A bounce just past the frame's sides or top is an OUT. Below the frame is where paddle hits and
+// floor bounces land in the camera view, so that edge stays quiet.
 function isNearMiss(r) {
   if (r.reason !== 'outside wall') return false;
   const { W, H } = game;
-  return r.x > -0.15 * W && r.x < 1.15 * W && r.y > -0.15 * H && r.y < 1.06 * H;
+  return r.x > -0.15 * W && r.x < 1.15 * W && r.y > -0.15 * H && r.y < H;
 }
 
 camera.onFrame((t) => {

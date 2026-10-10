@@ -26,6 +26,9 @@ export const TRACK_MAX = 24;
 export const GAP_MS = 160;
 export const COOLDOWN_MS = 250;
 export const SIZE_RATIO = 1.15;  // "looks bigger" means at least 15% bigger than both sides
+export const SHRINK_RATIO = 1.06; // still shrinking 6%+ on both sides = still flying toward the wall
+export const SMALLEST_RATIO = 1.02; // "looks smallest here" needs a 2% margin, so size noise can't fake it
+export const SPEED_JUMP = 2;     // speed change that counts as a bounce when the path doesn't turn
 export const BOUNDS_TOL = 0.02;  // hit may sit 2% outside the wall and still count
 
 // Game

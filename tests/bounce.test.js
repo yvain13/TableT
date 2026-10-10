@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BounceDetector, fitLine, intersect } from '../js/bounce.js';
+import { BounceDetector, fitMotion, meetPoint } from '../js/bounce.js';
 
 const params = { turnAngle: 70, minMove: 6, sizeCheck: true, bounds: { w: 1000, h: 750 } };
 
@@ -20,7 +20,35 @@ test('detects a wall bounce and places the hit where the paths cross', () => {
   const hits = path().map((p) => b.push(p, params)).filter(Boolean);
   assert.equal(hits.length, 1);
   assert.ok(Math.hypot(hits[0].x - 500, hits[0].y - 400) < 1, JSON.stringify(hits[0]));
-  assert.equal(hits[0].method, 'lines');
+  assert.equal(hits[0].method, 'paths');
+});
+
+test('ball straight in and back out along the camera line: hit lands on the contact point', () => {
+  // Camera behind the players: in the image the ball shrinks toward the contact point and comes
+  // back along nearly the same line, slower after the bounce, touching between two frames.
+  for (const offset of [0.2, 0.5, 0.8]) {
+    const b = new BounceDetector();
+    const pts = path({ inV: [24, -30], outV: [-17, 22.5], offset, size: (t) => 10 + Math.abs(t) * 0.6 });
+    const hits = pts.map((p) => b.push(p, params)).filter(Boolean);
+    assert.equal(hits.length, 1, `offset ${offset}`);
+    assert.ok(Math.hypot(hits[0].x - 500, hits[0].y - 400) < 2, `offset ${offset}: ${JSON.stringify(hits[0])}`);
+  }
+});
+
+test('ball passing straight through the contact point in the image, speeding up: still a bounce', () => {
+  // Comes in below the camera's height and leaves above it: no turn, only a speed change,
+  // and the ball looks smallest at the wall.
+  const b = new BounceDetector();
+  const pts = path({ inV: [6, -8], outV: [18, -24], offset: 0.5, size: (t) => 10 + Math.abs(t) * 0.8 });
+  const hits = pts.map((p) => b.push(p, params)).filter(Boolean);
+  assert.equal(hits.length, 1);
+  assert.ok(Math.hypot(hits[0].x - 500, hits[0].y - 400) < 3, JSON.stringify(hits[0]));
+});
+
+test('a ball still flying toward the wall (shrinking) is not a bounce, even on a sharp arc', () => {
+  const b = new BounceDetector();
+  const pts = path({ size: (t) => 20 - (t + 6) * 0.9 }); // shrinks the whole way
+  assert.equal(pts.map((p) => b.push(p, params)).filter(Boolean).length, 0);
 });
 
 test('straight flight is not a bounce', () => {
@@ -62,10 +90,11 @@ test('two bounces within 250 ms count once', () => {
   assert.equal(hits.length, 1);
 });
 
-test('line fit and intersection', () => {
-  const l1 = fitLine([{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 2 }]);
-  const l2 = fitLine([{ x: 0, y: 2 }, { x: 2, y: 0 }]);
-  const p = intersect(l1, l2);
-  assert.ok(Math.abs(p.x - 1) < 1e-9 && Math.abs(p.y - 1) < 1e-9);
-  assert.equal(intersect(l1, fitLine([{ x: 0, y: 1 }, { x: 1, y: 2 }])), null);
+test('motion fit and meeting point', () => {
+  const m1 = fitMotion([{ t: 0, x: 0, y: 0 }, { t: 1, x: 1, y: 2 }, { t: 2, x: 2, y: 4 }]);
+  assert.ok(Math.abs(m1.vx - 1) < 1e-9 && Math.abs(m1.vy - 2) < 1e-9 && m1.resid < 1e-9);
+  // In: reaches (3, 6) at t = 3. Out: leaves (3, 6) at t = 3 heading back, slower.
+  const m2 = fitMotion([{ t: 4, x: 2.5, y: 5 }, { t: 5, x: 2, y: 4 }]);
+  const p = meetPoint(m1, m2, 2, 4);
+  assert.ok(Math.abs(p.x - 3) < 1e-9 && Math.abs(p.y - 6) < 1e-9 && Math.abs(p.t - 3) < 1e-9, JSON.stringify(p));
 });
