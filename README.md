@@ -1,114 +1,189 @@
 # Wall Target Pong
 
-A projector shows circles on a wall. Hit them with an orange table tennis ball: a hit circle
-bursts, scores, and a new one appears. One static web page on an iPad draws the game and
-tracks the ball with the phone's (or tablet's) rear camera. There is no server, no network in the hit path,
-and no AI: classic computer vision only.
+**Turn any wall into an interactive ball game with a projector and a phone.**
+Targets appear on the wall; hit them with a table tennis ball and they burst and score.
+The phone's camera tracks the ball, and the phone draws the game, all in one web page.
+No app to install, no server, no special hardware.
 
-## Run it
+**▶ Play now: https://yvain13.github.io/TableT/**
 
-The camera needs a secure page (HTTPS, or `localhost` on the same machine).
+![Targets projected on the wall: purple 2-point, cyan 5-point and green 10-point circles, a burst after a hit, and the score in the corner](docs/gameplay.jpg)
 
-**On a laptop (quick check):**
+A do-it-yourself take on the "interactive ball wall" you see in play centres, built from things
+you probably already own. Good for table tennis practice, kids' active play, or a party game.
+It runs entirely in the browser, using classic computer vision with no AI model.
 
-```sh
-python3 -m http.server 8000      # then open http://localhost:8000
-```
+---
 
-**On the phone during development:** serve over HTTPS from the laptop, for example
-`npx cloudflared tunnel --url http://localhost:8000`, or `mkcert` plus any HTTPS static server,
-and open the URL in Safari over Wi-Fi.
+## What you need
 
-**Deploy:** push the folder to GitHub Pages, Netlify or Railway as static files. No build step.
-On iPhone, Safari → Share → Add to Home Screen; it then opens full screen (iPhone Safari can't go full screen otherwise), and the service worker
-keeps it working offline after the first load. Set Auto-Lock to Never (the page also asks
-for a Wake Lock).
+| Item | Notes |
+| --- | --- |
+| A projector | Any projector that can show your phone's screen. A wired (HDMI) connection gives the lowest delay |
+| A phone or tablet with a camera | iPhone, iPad or Android. It shows the game and its rear camera watches the wall |
+| A way to get the phone's screen onto the projector | USB-C/Lightning-to-HDMI adapter (best), or the projector's built-in screen mirroring (adds some delay) |
+| Orange table tennis balls | Orange is what the tracker looks for. White balls won't work |
+| A plain, flat wall | Light-coloured and smooth is best |
+| Somewhere to put the phone up high | Shelf, tripod or mount, behind the players and facing the wall |
 
-## Play
+Keep the phone **charging** while you play. The camera and screen running together drain the
+battery, and a hot phone slows its camera down.
 
-1. **Start**: tap Calibrate (or Play once a calibration is saved). This asks for the camera
-   and goes full screen.
-2. **Calibrate**: the screen goes black, then shows 4 green dots. The page finds them and
-   solves the camera-to-screen mapping. If it can't find all 4, tap the dots in the camera view
-   in order (top-left, top-right, bottom-right, bottom-left). Check that the green grid sits on
-   the projected cyan grid, then play.
-3. **Play**: hit circles inside the white frame. Each size has one colour and one value:
-   green small (11 cm) = 10, cyan medium (20 cm) = 5, purple large (35 cm) = 2.
-   The frame pulses when a game starts; a bounce just outside it flashes OUT on that edge.
+## Set up in 5 minutes
 
-Hidden controls: tap the score to pause or resume; hold it for about a second to reset.
-The faint ⚙ in the top-left opens Settings.
+1. **Put the projector and phone up high, behind where the players stand,** both facing the
+   target wall. Next to each other near the ceiling is ideal (see
+   [Camera placement](#camera-placement)).
+2. **Connect the phone to the projector** and mirror the screen. Turn the projector's keystone
+   correction off.
+3. **Open https://yvain13.github.io/TableT/** on the phone, turn it sideways, and allow camera access.
+   - iPhone/iPad: Share → **Add to Home Screen**, then open it from there for true full screen.
+   - Android (Chrome): it goes full screen by itself; "Add to Home screen" also works.
+4. **Tap Calibrate.** The wall goes black, then shows 4 green dots. The app finds them and
+   lines the camera up with the projection. If it can't find them, tap the 4 dots in the camera
+   view when asked. Check that the green grid sits on the cyan grid, then tap **Looks right: play**.
+5. **Open Settings (⚙, top-left) and set "Projected width"** to the measured width of the
+   picture on your wall. Target sizes come from this.
+6. **Play.**
 
-**Set "Projected width" in Settings** to the measured width of the image on your wall. Target
-sizes (10–40 cm) and the 2 cm hit margin are worked out from it.
+Calibration is saved. Next time, just open the app and tap **Play**. Recalibrate if the phone
+or projector gets bumped.
+
+## How to play
+
+- Hit circles **inside the white frame** with the ball.
+- Smaller circles are worth more. Each value always has the same size and colour:
+
+  | Circle | Size on the wall | Points |
+  | --- | --- | --- |
+  | Green, small | 11 cm | 10 |
+  | Cyan, medium | 20 cm | 5 |
+  | Purple, large | 35 cm | 2 |
+
+- A hit circle bursts and a new one pops up somewhere else.
+- A miss shows a faint ripple where the ball landed, so you can see the tracking working.
+- A bounce just outside the frame flashes **OUT** on that edge.
+- **Tap the score** to pause or resume. **Hold the score** for a second to reset.
 
 ## Camera placement
 
-Where the camera sits matters more than any setting. From a 3D simulation of a 4 m room at 30 fps:
+This matters more than any setting. The app needs to see the ball's path change at the wall,
+and some camera positions make that much clearer than others.
 
-| Camera | Bounces caught | 9 in 10 hits within | Worst |
+**Best: high up (ceiling height), behind the players, seeing the whole projected picture.**
+Right next to the projector works well.
+
+From a 3D simulation of a 4 m room:
+
+| Camera position | Bounces caught (30 fps) | 9 in 10 hits within (30 fps) | At 60 fps |
 | --- | --- | --- | --- |
-| Behind the players, chest height | ~48% | 2.3 cm | 14 cm |
-| Behind the players, ceiling height | ~88% | 2.0 cm | 3 cm |
-| Side wall, about 45° to the target wall | 100% | 6.5 cm | rare big misses |
+| Behind the players, chest height | about half | 2.3 cm | about 0.5 cm |
+| Behind the players, ceiling height | about 9 in 10 | 2.0 cm | about 0.5 cm |
+| Side wall, about 45° to the wall | all | 6.5 cm | about 1.5 cm |
 
-Best: high up (ceiling height), behind the players, seeing the whole frame. 60 fps (where the
-browser allows it) cuts errors to about 1 cm in every position.
+Also:
+- **Some room light helps.** In the dark the ball stops looking orange and the camera's frame
+  rate drops. Keep the room dim enough that the projection is visible.
+- Keep **ceiling fans** out of the camera's view, or turn them off.
+- Players shouldn't stand between the camera and the wall for long.
 
-## Settings
+## Settings and fine-tuning
 
-- Live camera view (greyscale, so the projected view never shows an orange ball to the
-  tracker) with overlays: wall outline, matching pixels, ball and trail, last hit.
-- Sliders: hue range, minimum saturation, minimum brightness, motion threshold, minimum blob
-  size, turn angle, minimum move, projected width.
-- Toggles: size check (rejects paddle hits), show ball dot on wall, test mode (tap = hit).
-- Readouts: camera resolution, delivered frames per second, per-frame processing time,
-  detections per second, calibration time, last rejected bounce and why.
-- Recalibrate, Reset score, Default tuning.
+Open **⚙ Settings** during play. The live camera view (shown in grey) marks the wall outline,
+the pixels the tracker thinks are the ball (cyan), the ball's trail (white) and the last hit
+(purple). Readouts show the camera resolution, frames per second, processing time per frame and
+the reason for the last rejected bounce.
 
-Settings and calibration are saved in browser storage, and fall back to defaults when storage
-is unavailable.
+For normal play, keep **Test mode** and **Show ball dot on wall** off.
 
-**Projector lag timer** (Start screen): a millisecond clock. Film the phone and the wall together
-in 240 fps slow motion; the difference between the two readings is the projector's lag.
+| Problem | Try |
+| --- | --- |
+| Frames/s shows 30 or less | Keep "Camera: prefer 60 fps" on, plug in the charger, add some room light, turn off Low Power Mode |
+| Hits land a little away from where the ball hit | Raise the camera (see above). Turn on "Show ball dot on wall", hold the ball on the wall at the corners and centre: if the dot is off, recalibrate |
+| Bounces are missed | Lower **Min move** to 4 and **Min blob size** to 4. Check the ball shows cyan in the camera view |
+| Hits appear with no ball (shadows, arms, clothes) | Raise **Motion threshold** (0.15–0.2) and **Min saturation** (0.55+). Avoid orange clothing |
+| Paddle hits count as wall hits | Keep **Size check** on |
+| The burst feels late | Use the projector's "game" or low-delay picture mode, and a cable rather than wireless mirroring. Measure the delay with the **Projector lag timer** on the Start screen |
+| Auto calibration fails | Dim the room a little, make sure the camera sees all 4 corners, or tap the dots by hand |
+
+**Test mode** (tap = hit) and **Try without a camera** on the Start screen let you try the game
+with no ball or camera.
+
+## Works on
+
+| Device | Status |
+| --- | --- |
+| iPhone with Safari or Chrome | Tested: 60 fps at 640×360 with the 60 fps setting on |
+| iPad | Supported (the original target device) |
+| Android with Chrome | Should work (same web features); not yet tested on a real device |
+| Laptop + USB webcam + projector | Works: it's just a web page |
+
+The page needs HTTPS for camera access (GitHub Pages provides it). After the first visit it
+also works offline.
+
+**Privacy:** camera frames are processed on the device and never sent anywhere. There's no
+server, no account and no tracking.
 
 ## How it works
 
+Everything runs on the phone, in plain JavaScript:
+
+1. **Calibration:** the app projects a black frame, then 4 green dots, and finds the dots in the
+   camera image. From their positions it works out the mapping from camera pixels to wall
+   positions (a homography) and saves it.
+2. **Finding the ball**, every camera frame:
+   - Look for pixels that are orange and have just become more orange.
+   - Orangeness is measured as a colour ratio, so shadows (which only change brightness) are ignored.
+   - Take the densest cluster of those pixels as the ball and map it to the wall.
+   - This takes about 2–3 ms per frame on a phone.
+3. **Detecting a bounce:** the ball looks smallest when it touches the wall (that's when it's
+   farthest from the camera). When its path or speed changes sharply right there, that's a
+   bounce. The exact hit point is where the path in and the path out meet in time, so no frame
+   needs to catch the moment of contact. Turns where the ball looks *bigger* (paddle hits) and
+   turns outside the wall (floor bounces) are ignored.
+4. **Game:** the hit point is tested against the circles, and the burst and score are drawn
+   on a canvas that the projector shows.
+
 | File | Job |
 | --- | --- |
-| `js/camera.js` | Rear camera at up to 60 fps; one callback per new frame (`requestVideoFrameCallback`), so slow frames are dropped, never queued |
-| `js/calibration.js` | Black frame and dot frame, green difference, blobs, corner order, homography; tap fallback; grid check |
-| `js/homography.js` | 8x8 solve, apply, invert |
-| `js/tracker.js` | Orange and newly orange pixels in the region of interest, densest 16 px cell, 48 px centroid window, mapped to the screen |
-| `js/bounce.js` | Turn sharper than the threshold → lines through the points before and after → their crossing is the hit |
-| `js/game.js` | Targets, hit test, score, burst, ripple, pop-in |
+| `js/camera.js` | Rear camera, 60 fps preferred; one callback per new frame (slow frames are dropped, never queued) |
+| `js/calibration.js` | Dot projection, dot finding, corner order, tap fallback, grid check |
+| `js/homography.js` | Camera-to-wall mapping maths |
+| `js/tracker.js` | Orange-pixel detection and ball position |
+| `js/bounce.js` | Bounce detection and hit point |
+| `js/game.js` | Targets, scoring, boundary, animations |
 | `js/settings.js` | Tuning panel |
-| `js/app.js` | Wires the modules and the screens |
+| `js/app.js` | Wires everything together |
 
-Details beyond the spec:
+No framework, no build step and no dependencies.
 
-- The ball's **size** is the width of its streak (the short axis of the pixel spread), so motion
-  blur doesn't make a fast ball look bigger and set off the paddle check.
-- The hit point is where the timed path in and path out meet (not where two lines cross), so it
-  works even when the ball comes straight back along the camera's line of sight.
-- The ball looks smallest at the wall: a turn while it is still shrinking is part of the throw,
-  and a sudden speed change where it looks smallest counts as a bounce even with no turn.
-- Once a turn is rejected (floor bounce, paddle hit), the next two candidates, which span the
-  same turn, are skipped too.
-- The orange level is (red − blue) / (red + green + blue), a ratio, so shadows moving on the wall
-  (which change brightness, not colour) don't register as the ball.
-- Open with `?debug` to get `window.wtp` (game, tracker, bounce, camera…) in the console.
+## Run your own copy
 
-## Tests
+**Fork and host:** fork this repo, then in your fork go to Settings → Pages → Deploy from a
+branch → `main` / `(root)`. Your copy will be at `https://<you>.github.io/<repo>/`. Any static
+host (Netlify, Cloudflare Pages…) works too.
+
+**Develop locally:**
 
 ```sh
-npm test    # node --test: homography, dot finding, ball detection, bounce detection, hit test, placement
+python3 -m http.server 8000         # http://localhost:8000 (camera works on localhost)
+npm test                            # unit tests (Node 18+), no install needed
 ```
 
-## Milestones (from the spec)
+To test on a phone during development, the page must be served over HTTPS, for example with
+`npx cloudflared tunnel --url http://localhost:8000`. Add `?debug` to the URL to get
+`window.wtp` (game, tracker, bounce, camera) in the browser console.
 
-1. Table test: live tracking and readouts on the iPad; measure fps and projector lag.
-2. Calibration: a ball held on the wall maps within 2 cm at the 4 corners and the centre.
-3. Bounce detection: at least 9 of 10 hits in 20 casual throws; at most 1 false hit in 2 minutes.
-4. Game: a 5-minute session with no reload.
-5. Mount and polish: from power-on to playing in under 5 minutes.
+After changing files, bump `VERSION` in `sw.js` so phones pick up the new version instead of
+the cached copy.
+
+## Ideas for later
+
+- Multiplayer: take turns, then one ball colour per player
+- Game modes: timed rounds, moving targets, combos, targets that shrink as you score
+- Sound effects
+- Start and restart by hitting a projected button, so a ceiling-mounted phone never needs touching
+- A native app reading the camera at 120 fps, for hard smashes
+
+Issues and pull requests are welcome, especially test reports from Android phones and
+different projectors.
